@@ -1,0 +1,133 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ask About Hannah's Family</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; padding: 0; background: #f9f9f9; }
+    #quiz { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    h1 { text-align: center; }
+    .question { margin: 20px 0; }
+    input[type="text"] { width: 100%; padding: 10px; margin: 10px 0; }
+    button { padding: 10px 20px; font-size: 16px; border: none; border-radius: 8px; background-color: #4CAF50; color: white; cursor: pointer; }
+    button:hover { background-color: #45a049; }
+    #result { margin-top: 20px; font-weight: bold; }
+    #timer { font-size: 18px; color: red; float: right; }
+  </style>
+</head>
+<body>
+  <div id="quiz">
+    <h1>Ask About Hannah's Family</h1>
+    <div id="timer"></div>
+    <div id="content"></div>
+  </div>
+
+  <script>
+    const family = [
+      { name: "Dad", gender: "Male", job: "Analyst", type: "Human", hobby: "Singing", nationality: "Korea", birth: "20th" },
+      { name: "Mom", gender: "Female", job: "Organist", type: "Human", hobby: "Decorating", nationality: "Korea", birth: "20th" },
+      { name: "Hannah", gender: "Female", job: "Student", type: "Human", hobby: "Writing", nationality: "Korea", birth: "21st" },
+      { name: "Luna", gender: "Female", job: "Pet", type: "Dog", hobby: "Walking", nationality: "Mexico", birth: "21st" },
+      { name: "Bada", gender: "Female", job: "Pet", type: "Cat", hobby: "Rubbing", nationality: "Mexico", birth: "21st" },
+    ];
+
+    let score = 0;
+    let questionCount = 0;
+    let startTime = null;
+    let totalTime = 60;
+    let questions = [];
+    let current = 0;
+
+    function getRandomCondition() {
+      const keys = ["gender", "job", "type", "hobby", "nationality", "birth"];
+      const key = keys[Math.floor(Math.random() * keys.length)];
+      const val = family[Math.floor(Math.random() * family.length)][key];
+      return { key, val };
+    }
+
+    function generateCountQuestion() {
+      const cond = getRandomCondition();
+      const matches = family.filter(m => m[cond.key] === cond.val);
+      return {
+        text: `How many family members have: ${cond.key} is ${cond.val}?`,
+        answer: matches.length.toString()
+      };
+    }
+
+    function generatePropertyQuestion() {
+      let q;
+      while (!q) {
+        const cond = getRandomCondition();
+        const matches = family.filter(m => m[cond.key] === cond.val);
+        if (matches.length === 1) {
+          const person = matches[0];
+          const keys = Object.keys(person).filter(k => k !== cond.key && k !== "name");
+          const target = keys[Math.floor(Math.random() * keys.length)];
+          q = {
+            text: `What is the ${target} of the family member with ${cond.key} is ${cond.val}?`,
+            answer: person[target].toLowerCase()
+          };
+        }
+      }
+      return q;
+    }
+
+    function startQuiz() {
+      score = 0;
+      questionCount = 0;
+      current = 0;
+      questions = [];
+      for (let i = 0; i < 3; i++) questions.push(generateCountQuestion());
+      for (let i = 0; i < 3; i++) questions.push(generatePropertyQuestion());
+      startTime = Date.now();
+      updateTimer();
+      askQuestion();
+    }
+
+    function updateTimer() {
+      const now = Date.now();
+      const elapsed = Math.floor((now - startTime) / 1000);
+      const remaining = totalTime - elapsed;
+      document.getElementById("timer").innerText = `⏱️ ${remaining}s`;
+      if (remaining > 0) {
+        setTimeout(updateTimer, 1000);
+      } else {
+        showResult();
+      }
+    }
+
+    function askQuestion() {
+      if (current >= questions.length) return showResult();
+      const q = questions[current];
+      document.getElementById("content").innerHTML = `
+        <div class="question"><strong>Question ${current + 1}:</strong> ${q.text}</div>
+        <input type="text" id="answer" />
+        <button onclick="checkAnswer()">Submit</button>
+      `;
+    }
+
+    function checkAnswer() {
+      const input = document.getElementById("answer").value.trim().toLowerCase();
+      if (!input) return alert("Please enter an answer.");
+      const q = questions[current];
+      if (input === q.answer) score++;
+      current++;
+      askQuestion();
+    }
+
+    function showResult() {
+      const percent = Math.round((score / questions.length) * 100);
+      document.getElementById("content").innerHTML = `
+        <h2>Quiz Complete!</h2>
+        <p>Your Score: ${score} / ${questions.length}</p>
+        <p>Accuracy: ${percent}%</p>
+        <button onclick="startQuiz()">Play Again</button>
+      `;
+    }
+
+    window.onload = startQuiz;
+  </script>
+</body>
+</html>
